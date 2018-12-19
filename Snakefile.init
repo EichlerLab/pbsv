@@ -1,0 +1,90 @@
+"""
+Read configuration parameters and prepare pipeline for PBSV. This must be run before files in Snakefile.
+
+This pipeline creates one file per
+"""
+
+
+#
+# Init
+#
+
+# Initialize, import, and read configs
+include: 'rules/include.snakefile'
+
+
+#
+# Rules
+#
+
+# pbsv_init_all
+#
+# Initialize all samples
+rule pbsv_init_all:
+    input:
+        tab=expand('init/{sample}/cell_table.tab', sample=SAMPLE_TABLE['SAMPLE'])
+    output:
+        tab='init/subread_table.tab'
+    run:
+
+        df = pd.concat(
+            [pd.read_table(val, header=0) for val in input.tab],
+            axis=0
+        )
+
+        df = df.loc[:, ('SAMPLE', 'MOVIE', 'SUBREADS')]
+
+        df.to_csv(output.tab, sep='\t', index=False)
+
+# pbsv_init_sample_tables
+#
+# Write a cell table and a flag file for each movie in the sample.
+rule pbsv_init_sample_tables:
+    output:
+        tab='init/{sample}/cell_table.tab'
+    run:
+
+        # Get sample
+        if wildcards.sample not in SAMPLE_TABLE.index:
+            raise RuntimeError('Sample {} is not in the sample table: {}'.format(wildcards.sample, SAMPLE_TABLE_FILE))
+
+        df_sample = SAMPLE_TABLE.loc[wildcards.sample].squeeze()
+
+        # Read FOFN
+        if not os.path.isfile(df_sample['FOFN']):
+            raise RuntimeError('Cannot find FOFN file for sample {}: {}'.format(wildcards.sample, df_sample['FOFN']))
+
+        with open(df_sample['FOFN'], 'r') as in_file:
+            fofn_list = [
+                line.strip() for line in in_file if line.strip()
+            ]
+
+        # Check files in FOFN
+        if not fofn_list:
+            raise RuntimeError(
+                'No input files defined in FOFN file for sample {}: {}'.format(wildcards.sample, df_sample['FOFN'])
+            )
+
+        missing_files = [line for line in fofn_list if not os.path.isfile(line)]
+
+        if missing_files:
+            raise RuntimeError('Found {} missing file(s) in FOFN for sample {}: {}{}'.format(
+                len(missing_files),
+                wildcards.sample,
+                ' ...' if len(missing_files) > 1 else ''
+            ))
+
+        # Build table and assign movie number
+        df = pd.concat(
+            [
+                pd.Series(vals, index=['MOVIE', 'SUBREADS']) for vals in zip(range(len(fofn_list)), fofn_list)
+            ],
+            axis=1
+        ).T
+
+        df['SAMPLE'] = wildcards.sample
+
+        df = df.loc[:, ('SAMPLE', 'MOVIE', 'SUBREADS')]
+
+        # Write output table
+        df.to_csv(output.tab, sep='\t', index=False)

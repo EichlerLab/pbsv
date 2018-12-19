@@ -1,0 +1,36 @@
+{
+  "__default__": {
+    "mem": "1G",
+    "cpu": "1",
+    "rt": "00:30:00",
+    "params": ""
+  },
+
+  "pbsv_align_get_bam": {
+    "mem": "4.5G",
+    "cpu": "4",
+    "rt": "36:00:00"
+  },
+  "pbsv_align_merge_bam": {
+    "cpu": "4",
+    "rt": "12:00:00"
+  },
+
+  "pbsv_call_unmerged_sv": {
+    "mem": "12G",
+    "cpu": "4",
+    "rt": "16:00:00"
+  },
+  "pbsv_call_unmerged_bnd": {
+    "mem": "6G",
+    "cpu": "4",
+    "rt": "12:00:00"
+  },
+  "pbsv_call_discover": {
+    "mem": "64G"
+  },
+  "pbsv_call_final_bnd": {
+    "rt": "2:00:00",
+    "mem": "4G"
+  }
+}
