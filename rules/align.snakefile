@@ -60,32 +60,20 @@ rule pbsv_align_get_bam:
         if movie not in df.index:
             raise RuntimeError('Movie {} is not in the sample cell table: {}'.format(wildcards.movie, input.tab))
 
-        # Initialize temporary location for samtools sort
-        os.makedirs(TEMP_DIR, exist_ok=True)
-
-        temp_dir = tempfile.mkdtemp(dir=TEMP_DIR, prefix='pbsv_align_sort_', suffix='_{}'.format(wildcards.sample))
-
         # Set parameter dictionary
         param_dict = {
             'SAMPLE': wildcards.sample,
             'MOVIE': movie,
             'INPUT_FILE': df.loc[movie],
             'REF_FA': input.ref_fa,
-            'OUTPUT_FILE': output.bam,
-            'TEMP_DIR': temp_dir
+            'OUTPUT_FILE': output.bam
         }
 
         # Report temp directory
         print('Aligning: {sample} movie {movie}'.format(**wildcards))
-        print('Temp directory: {}'.format(temp_dir))
 
         # Align
         shell((
-            """pbsv fasta {INPUT_FILE} | """
-            """minimap2 -x map-pb -a --eqx -L -O 5,56 -E 4,1 -B 5 --secondary=no -z 400,50 -r 2k -Y -R"""
-                """ "@RG\\tID:rg{SAMPLE}-{MOVIE}\\tSM:{SAMPLE}" {REF_FA} - | """
-            """samtools sort -T {TEMP_DIR}/sort_ > """
-            """{OUTPUT_FILE}; """
-            """rm -rf {TEMP_DIR}; """
+            """pbmm2 align {INPUT_FILE} {REF_FA} {OUTPUT_FILE} --sort --sample '{SAMPLE}' --median-filter -j 4 -J 2; """
             """samtools index {OUTPUT_FILE}"""
         ).format(**param_dict))

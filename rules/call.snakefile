@@ -84,67 +84,137 @@ def _pbsv_get_all_svsig_files(wildcards):
     # Return
     return svsig_file_list
 
+
+#############
+### Rules ###
+#############
+
+
 #
-# Rules
+# Per sample callset
 #
 
-# pbsv_call_final_bnd
+# pbsv_call_sample_final_bnd
 #
 # Make final BND output file.
 #
 # Note: awk command is a workaround for version 1.2 and may not be needed for newer versions.
 # See: https://github.com/PacificBiosciences/pbbioconda/issues/60
-rule pbsv_call_final_bnd:
+rule pbsv_call_sample_final_bnd:
     input:
-        vcf='temp/call/unmerged_vcf/bnd/variants_all.vcf'
+        vcf='temp/call/unmerged_vcf/sample_{sample}/bnd/variants_all.vcf'
     output:
-        calls='pbsv_bnd.vcf.gz'
+        calls='pbsv_sample_{sample}_bnd.vcf.gz'
     shell:
         """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' {input.vcf} | """
         """bcftools view -O z -o {output.calls}; """
         """tabix {output.calls}"""
 
-# pbsv_call_final_vcf
+# pbsv_call_sample_final_vcf
 #
 # Merge and sort SV calls.
 #
 # Note: sed and awk command is a workaround for version 1.2 and may not be needed for newer versions.
 # See: https://github.com/PacificBiosciences/pbbioconda/issues/60
-rule pbsv_call_merge_sv:
+rule pbsv_call_sample_final_vcf:
     input:
-        vcf=expand('temp/call/unmerged_vcf/sv/variants_{chrom}.vcf', chrom=_pbsv_call_get_chrom_list())
+        vcf=expand('temp/call/unmerged_vcf/sample_{{sample}}/sv/variants_{chrom}.vcf', chrom=_pbsv_call_get_chrom_list())
     output:
-        calls='pbsv_sv.vcf.gz'
+        calls='pbsv_sample_{sample}_sv.vcf.gz'
     shell:
         """bcftools concat -O v {input.vcf} | """
-        """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' | """
-        """sed '12i##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise SV breakpoint">' | """
         """bcftools sort -O z -o {output.calls}; """
         """tabix {output.calls}"""
 
-# pbsv_call_unmerged_bnd
+# pbsv_call_sample_unmerged_bnd
 #
 # Make initial SV calls (INS, DEL, and INV) for one chromosome.
-rule pbsv_call_unmerged_bnd:
+rule pbsv_call_sample_unmerged_bnd:
     input:
         ref_fa=config['reference'],
         svsig=_pbsv_get_all_svsig_files
     output:
-        vcf=temp('temp/call/unmerged_vcf/bnd/variants_all.vcf')
+        vcf=temp('temp/call/unmerged_vcf/sample_{sample}/bnd/variants_all.vcf')
     shell:
         """pbsv call --types BND -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
 
-# pbsv_call_unmerged_sv
+# pbsv_call_sample_unmerged_sv
 #
 # Make initial SV calls (INS, DEL, and INV) for one chromosome.
-rule pbsv_call_unmerged_sv:
+rule pbsv_call_sample_unmerged_sv:
     input:
         ref_fa=config['reference'],
         svsig=_pbsv_get_all_svsig_files
     output:
-        vcf=temp('temp/call/unmerged_vcf/sv/variants_{chrom}.vcf')
+        vcf=temp('temp/call/unmerged_vcf/sample_{sample}/sv/variants_{chrom}.vcf')
     shell:
         """pbsv call --types INS,DEL,INV -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
+
+
+#
+# Joint callset
+#
+
+# pbsv_call_joint_final_bnd
+#
+# Make final BND output file.
+#
+# Note: awk command is a workaround for version 1.2 and may not be needed for newer versions.
+# See: https://github.com/PacificBiosciences/pbbioconda/issues/60
+rule pbsv_call_joint_final_bnd:
+    input:
+        vcf='temp/call/unmerged_vcf/joint_all/bnd/variants_all.vcf'
+    output:
+        calls='pbsv_joint_all_bnd.vcf.gz'
+    shell:
+        """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' {input.vcf} | """
+        """bcftools view -O z -o {output.calls}; """
+        """tabix {output.calls}"""
+
+# pbsv_call_joint_merge_sv
+#
+# Merge and sort SV calls.
+#
+# Note: sed and awk command is a workaround for version 1.2 and may not be needed for newer versions.
+# See: https://github.com/PacificBiosciences/pbbioconda/issues/60
+rule pbsv_call_joint_merge_sv:
+    input:
+        vcf=expand('temp/call/unmerged_vcf/joint_all/sv/variants_{chrom}.vcf', chrom=_pbsv_call_get_chrom_list())
+    output:
+        calls='pbsv_joint_all_sv.vcf.gz'
+    shell:
+        """bcftools concat -O v {input.vcf} | """
+        """bcftools sort -O z -o {output.calls}; """
+        """tabix {output.calls}"""
+
+# pbsv_call_joint_unmerged_bnd
+#
+# Make initial SV calls (INS, DEL, and INV) for one chromosome.
+rule pbsv_call_joint_unmerged_bnd:
+    input:
+        ref_fa=config['reference'],
+        svsig=_pbsv_get_all_svsig_files
+    output:
+        vcf=temp('temp/call/unmerged_vcf/joint_all/bnd/variants_all.vcf')
+    shell:
+        """pbsv call --types BND -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
+
+# pbsv_call_joint_unmerged_sv
+#
+# Make initial SV calls (INS, DEL, and INV) for one chromosome.
+rule pbsv_call_joint_unmerged_sv:
+    input:
+        ref_fa=config['reference'],
+        svsig=_pbsv_get_all_svsig_files
+    output:
+        vcf=temp('temp/call/unmerged_vcf/joint_all/sv/variants_{chrom}.vcf')
+    shell:
+        """pbsv call --types INS,DEL,INV -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
+
+
+#
+# Discover
+#
 
 # pbsv_call_discover
 #

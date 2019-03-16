@@ -37,7 +37,7 @@ Define a variable that gives the full path to the pbsv pipeline code, which is t
 and this `README.md` file. The pipeline itself does not use the variable, but commands in this README will.
 
 Example:
-`PIPELINE_DIR=/net/eichler/vol27/projects/structural_variation/nobackups/pipelines/pbsv/201809`
+`PIPELINE_DIR=/net/eichler/vol27/projects/structural_variation/nobackups/pipelines/pbsv/201903`
 
 This section assumes the pbsv pipeline is not in the working directory, which is the recommended usage. That means the
 current directory is where `samples.tab` is and where all output files will go, but the pipeline code is in
@@ -83,7 +83,7 @@ pipeline will read the information in `results/init`. The second step then align
 To distribute jobs over the cluster, make sure DRMAA_LIBRARY_PATH is set in the environment (see below). Use the command
 below. You may want to modify the number of concurrent jobs (-j).
 
-`mkdir -p log; snakemake -s ${PIPELINE_DIR}/Snakefile -j 30 -T -k --jobname "{rulename}.{jobid}" --drmaa " -V -cwd -e ./log -o ./log -pe serial {cluster.cpu} -l mfree={cluster.mem} -l h_rt={cluster.rt} -w n -S /bin/bash" -w 60 -u ${PIPELINE_DIR}/cluster.eichler.json`
+`mkdir -p log; snakemake -s ${PIPELINE_DIR}/Snakefile -j 30 -k --jobname "{rulename}.{jobid}" --drmaa " -V -cwd -e ./log -o ./log -pe serial {cluster.cpu} -l mfree={cluster.mem} -l h_rt={cluster.rt} -w n -S /bin/bash" -w 60 -u ${PIPELINE_DIR}/cluster.eichler.json --config ld_path=${LD_LIBRARY_PATH}`
 
 If DRMAA_LIBRARY_PATH is not set in your environment, run this before distributing jobs:
 `export DRMAA_LIBRARY_PATH=/opt/uge/lib/lx-amd64/libdrmaa.so.1.0`

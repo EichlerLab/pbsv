@@ -13,24 +13,41 @@
   },
   "pbsv_align_merge_bam": {
     "cpu": "4",
-    "rt": "12:00:00"
+    "rt": "36:00:00"
   },
 
-  "pbsv_call_unmerged_sv": {
+  "pbsv_call_sample_unmerged_sv": {
     "mem": "12G",
     "cpu": "4",
     "rt": "16:00:00"
   },
-  "pbsv_call_unmerged_bnd": {
+  "pbsv_call_sample_unmerged_bnd": {
     "mem": "6G",
     "cpu": "4",
     "rt": "12:00:00"
   },
-  "pbsv_call_discover": {
-    "mem": "64G"
-  },
-  "pbsv_call_final_bnd": {
+  "pbsv_call_sample_final_bnd": {
     "rt": "2:00:00",
     "mem": "4G"
+  },
+
+  "pbsv_call_joint_unmerged_sv": {
+    "mem": "12G",
+    "cpu": "4",
+    "rt": "16:00:00"
+  },
+  "pbsv_call_joint_unmerged_bnd": {
+    "mem": "6G",
+    "cpu": "4",
+    "rt": "12:00:00"
+  },
+  "pbsv_call_joint_final_bnd": {
+    "rt": "2:00:00",
+    "mem": "4G"
+  },
+
+  "pbsv_call_discover": {
+    "mem": "64G",
+    "rt": "18:00:00"
   }
 }
