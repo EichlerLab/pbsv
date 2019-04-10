@@ -123,6 +123,8 @@ rule pbsv_call_sample_final_vcf:
         calls='pbsv_sample_{sample}_sv.vcf.gz'
     shell:
         """bcftools concat -O v {input.vcf} | """
+        """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' | """
+        """sed '12i##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise SV breakpoint">' | """
         """bcftools sort -O z -o {output.calls}; """
         """tabix {output.calls}"""
 
@@ -184,6 +186,8 @@ rule pbsv_call_joint_merge_sv:
         calls='pbsv_joint_all_sv.vcf.gz'
     shell:
         """bcftools concat -O v {input.vcf} | """
+        """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' | """
+        """sed '12i##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise SV breakpoint">' | """
         """bcftools sort -O z -o {output.calls}; """
         """tabix {output.calls}"""
 
