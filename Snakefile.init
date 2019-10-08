@@ -24,15 +24,15 @@ rule pbsv_init_all:
     input:
         tab=expand('init/{sample}/cell_table.tab', sample=SAMPLE_TABLE['SAMPLE'])
     output:
-        tab='init/subread_table.tab'
+        tab='init/cell_table.tab'
     run:
 
         df = pd.concat(
-            [pd.read_table(val, header=0) for val in input.tab],
+            [pd.read_csv(val, sep='\t', header=0) for val in input.tab],
             axis=0
         )
 
-        df = df.loc[:, ('SAMPLE', 'MOVIE', 'SUBREADS')]
+        df = df.loc[:, ('SAMPLE', 'MOVIE', 'DATA')]
 
         df.to_csv(output.tab, sep='\t', index=False)
 
@@ -77,14 +77,14 @@ rule pbsv_init_sample_tables:
         # Build table and assign movie number
         df = pd.concat(
             [
-                pd.Series(vals, index=['MOVIE', 'SUBREADS']) for vals in zip(range(len(fofn_list)), fofn_list)
+                pd.Series(vals, index=['MOVIE', 'DATA']) for vals in zip(range(len(fofn_list)), fofn_list)
             ],
             axis=1
         ).T
 
         df['SAMPLE'] = wildcards.sample
 
-        df = df.loc[:, ('SAMPLE', 'MOVIE', 'SUBREADS')]
+        df = df.loc[:, ('SAMPLE', 'MOVIE', 'DATA')]
 
         # Write output table
         df.to_csv(output.tab, sep='\t', index=False)

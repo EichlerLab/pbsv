@@ -47,9 +47,6 @@ def _pbsv_get_all_svsig_files(wildcards):
     # Input file pattern
     svsig_file_pattern = 'call/svsig/{sample}/discover_{chrom}.svsig.gz'
 
-    # Get subread table
-    df_subread = pd.read_table('init/subread_table.tab', header=0)
-
     # Get list of chromosomes
     chrom = wildcards.get('chrom', None)
 
@@ -124,13 +121,14 @@ rule pbsv_call_sample_final_vcf:
     shell:
         """bcftools concat -O v {input.vcf} | """
         """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' | """
-        """sed '12i##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise SV breakpoint">' | """
+#        """sed '12i##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise SV breakpoint">' | """
         """bcftools sort -O z -o {output.calls}; """
+        """sleep 10; """
         """tabix {output.calls}"""
 
 # pbsv_call_sample_unmerged_bnd
 #
-# Make initial SV calls (INS, DEL, and INV) for one chromosome.
+# Make initial SV calls for one chromosome.
 rule pbsv_call_sample_unmerged_bnd:
     input:
         ref_fa=config['reference'],
@@ -149,8 +147,10 @@ rule pbsv_call_sample_unmerged_sv:
         svsig=_pbsv_get_all_svsig_files
     output:
         vcf=temp('temp/call/unmerged_vcf/sample_{sample}/sv/variants_{chrom}.vcf')
+    params:
+        min_svlen=config.get('min_svlen', '20')
     shell:
-        """pbsv call --types INS,DEL,INV -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
+        """pbsv call --types INS,DEL,INV,DUP -m {params.min_svlen} -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
 
 
 #
@@ -171,6 +171,7 @@ rule pbsv_call_joint_final_bnd:
     shell:
         """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' {input.vcf} | """
         """bcftools view -O z -o {output.calls}; """
+        """sleep 10; """
         """tabix {output.calls}"""
 
 # pbsv_call_joint_merge_sv
@@ -187,13 +188,13 @@ rule pbsv_call_joint_merge_sv:
     shell:
         """bcftools concat -O v {input.vcf} | """
         """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' | """
-        """sed '12i##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise SV breakpoint">' | """
+#        """sed '12i##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise SV breakpoint">' | """
         """bcftools sort -O z -o {output.calls}; """
         """tabix {output.calls}"""
 
 # pbsv_call_joint_unmerged_bnd
 #
-# Make initial SV calls (INS, DEL, and INV) for one chromosome.
+# Make initial SV calls for one chromosome.
 rule pbsv_call_joint_unmerged_bnd:
     input:
         ref_fa=config['reference'],
@@ -212,8 +213,10 @@ rule pbsv_call_joint_unmerged_sv:
         svsig=_pbsv_get_all_svsig_files
     output:
         vcf=temp('temp/call/unmerged_vcf/joint_all/sv/variants_{chrom}.vcf')
+    params:
+        min_svlen=config.get('min_svlen', '20')
     shell:
-        """pbsv call --types INS,DEL,INV -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
+        """pbsv call --types INS,DEL,INV,DUP -m {params.min_svlen} -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
 
 
 #

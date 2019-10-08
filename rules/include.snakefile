@@ -76,14 +76,14 @@ PROCESS_ENV = os.environ.copy()
 
 # Definitions
 SAMPLE_TABLE_FILE = os.path.join(WORKING_DIR, 'samples.tab')
-SAMPLE_TABLE_COLUMNS = ['SAMPLE', 'FOFN']
+SAMPLE_TABLE_COLUMNS = ['SAMPLE', 'FOFN', 'TYPE']
 
 # Check for file
 if not os.path.exists(SAMPLE_TABLE_FILE):
     raise RuntimeError('Missing sample table: {}'.format(SAMPLE_TABLE_FILE))
 
 # Read
-SAMPLE_TABLE = pd.read_table(SAMPLE_TABLE_FILE, header=0)
+SAMPLE_TABLE = pd.read_csv(SAMPLE_TABLE_FILE, sep='\t', header=0)
 
 # Check for missing columns
 missing_cols = [col for col in SAMPLE_TABLE_COLUMNS if col not in SAMPLE_TABLE.columns]

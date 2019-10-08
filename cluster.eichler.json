@@ -12,12 +12,13 @@
     "rt": "36:00:00"
   },
   "pbsv_align_merge_bam": {
-    "cpu": "4",
-    "rt": "36:00:00"
+    "cpu": "8",
+    "mem": "0.5G",
+    "rt": "7:00:00:00"
   },
 
   "pbsv_call_sample_unmerged_sv": {
-    "mem": "12G",
+    "mem": "8G",
     "cpu": "4",
     "rt": "16:00:00"
   },
@@ -26,18 +27,14 @@
     "cpu": "4",
     "rt": "12:00:00"
   },
-  "pbsv_call_sample_final_bnd": {
-    "rt": "2:00:00",
-    "mem": "4G"
-  },
 
   "pbsv_call_joint_unmerged_sv": {
-    "mem": "12G",
+    "mem": "8G",
     "cpu": "4",
     "rt": "16:00:00"
   },
   "pbsv_call_joint_unmerged_bnd": {
-    "mem": "6G",
+    "mem": "2.5G",
     "cpu": "4",
     "rt": "12:00:00"
   },
@@ -47,7 +44,7 @@
   },
 
   "pbsv_call_discover": {
-    "mem": "64G",
+    "mem": "8G",
     "rt": "18:00:00"
   }
 }

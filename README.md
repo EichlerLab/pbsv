@@ -1,10 +1,9 @@
 # PBSV pipeline
 
-Pipeline is under development as of 2018-09-27 (by Peter Audano).
-
 ## About
 
-Runs the PacBio pbsv tool (https://github.com/PacificBiosciences/pbsv) to call structural variants.
+Runs the PacBio pbsv tool (https://github.com/PacificBiosciences/pbsv) to call structural variants. Pipeline is up to
+date as of PBSV 2.2.0.
 
 ## Setup
 
@@ -18,8 +17,16 @@ Create a configuration file called `config.json`. Add the following text adjusti
 ```
 {
   "reference": "/path/to/hg38.no_alt.fa",
+  "tandem_bed": "/net/eichler/vol27/projects/structural_variation/nobackups/pub/AudanoSulovari_Cell_2018/svpop/data/anno/trf/trf_regions_200_0.bed",
 }
 ```
+
+"tandem_bed" points to a bed file of tandem repeat regions. In this example, the UCSC TRF track was merged (bedtools merge)
+concatenating with records that touch or are within 200 bp.
+
+An optional parameter "min_svlen" sets the minimum SV/Indel length. The default value in PBSV is currently "20", and this
+can be adjusted as low as "10" (< 10 causes PBSV to fail and return an error message).
+
 
 ### Define input samples
 
@@ -37,7 +44,7 @@ Define a variable that gives the full path to the pbsv pipeline code, which is t
 and this `README.md` file. The pipeline itself does not use the variable, but commands in this README will.
 
 Example:
-`PIPELINE_DIR=/net/eichler/vol27/projects/structural_variation/nobackups/pipelines/pbsv/201903`
+`PIPELINE_DIR=/net/eichler/vol27/projects/structural_variation/nobackups/pipelines/pbsv/201907`
 
 This section assumes the pbsv pipeline is not in the working directory, which is the recommended usage. That means the
 current directory is where `samples.tab` is and where all output files will go, but the pipeline code is in
@@ -52,12 +59,11 @@ be available before running the pipeline.
 
 Pipeline was last tested with these Eichler lab modules:
 ```
-module load htslib/1.7 bcftools/1.8
-module load tabix/0.2.6
-module load pbconda/201812
-module load minimap2/2.12
+module load htslib/1.9
+module load bcftools/1.9
 module load samtools/1.9
-module load miniconda/4.5.11
+module load pbconda/201904
+module load miniconda/4.5.12
 ```
 
 ## Run

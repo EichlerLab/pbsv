@@ -10,16 +10,39 @@ def _pbsv_align_get_bams_per_sample(wildcards):
     # Set BAM file pattern
     bam_pattern = 'temp/align/{SAMPLE}/movie/movie_{MOVIE}.bam'
 
-    # Get subread table
-    subread_table = pd.read_table('init/subread_table.tab', header=0)
+    # Get data table
+    cell_table = pd.read_csv('init/cell_table.tab', sep='\t', header=0)
 
-    subread_table = subread_table.loc[subread_table['SAMPLE'] == wildcards.sample]
+    cell_table = cell_table.loc[cell_table['SAMPLE'] == wildcards.sample]
 
-    if subread_table.shape[0] == 0:
-        raise RuntimeError('No input for sample in subread table: {}'.format(wildcards.sample))
+    if cell_table.shape[0] == 0:
+        raise RuntimeError('No input for sample in cell table: {}'.format(wildcards.sample))
 
     # Return a list of BAM files
-    return [bam_pattern.format(**row) for index, row in subread_table.iterrows()]
+    return [bam_pattern.format(**row) for index, row in cell_table.iterrows()]
+
+def _pbsv_align_pbmm2_params(wildcards):
+    """
+    Get datatype-specific parameters for pbmm2 (CCS or subreads).
+
+    :param wildcards: Rule wildcards.
+
+    :return: PBSV parameters.
+    """
+
+    if wildcards.sample not in SAMPLE_TABLE.index:
+        raise RuntimeError('Missing sample table entry for: {sample}'.format(**wildcards))
+
+    sample_type = SAMPLE_TABLE.loc[wildcards.sample].squeeze()['TYPE'].lower()
+
+    if sample_type == 'ccs':
+        return '--preset CCS'
+    elif sample_type == 'subreads':
+        return '--median-filter'
+    else:
+        raise RuntimeError('Unrecognized sequence data type for sample {}: {}'.format(wildcards.sample, sample_type))
+
+
 
 
 # pbsv_align_merge_bam
@@ -32,7 +55,7 @@ rule pbsv_align_merge_bam:
         bam='align/{sample}/mapped_reads.bam',
         bai='align/{sample}/mapped_reads.bam.bai'
     shell:
-        """samtools merge -O BAM -@ 4 {output.bam} {input.bam}; """
+        """samtools merge -O BAM -@ 6 {output.bam} {input.bam}; """
         """samtools index {output.bam}"""
 
 # pbsv_align_get_bam
@@ -50,7 +73,7 @@ rule pbsv_align_get_bam:
     run:
 
         # Read cell table
-        df = pd.read_table(input.tab, header=0, usecols=('MOVIE', 'SUBREADS'), index_col='MOVIE', squeeze=True)
+        df = pd.read_csv(input.tab, sep='\t', header=0, index_col='MOVIE', squeeze=True)
 
         try:
             movie = np.int32(wildcards.movie)
@@ -60,13 +83,16 @@ rule pbsv_align_get_bam:
         if movie not in df.index:
             raise RuntimeError('Movie {} is not in the sample cell table: {}'.format(wildcards.movie, input.tab))
 
+        df_movie = df.loc[movie].squeeze()
+
         # Set parameter dictionary
         param_dict = {
             'SAMPLE': wildcards.sample,
             'MOVIE': movie,
-            'INPUT_FILE': df.loc[movie],
+            'INPUT_FILE': df_movie['DATA'],
             'REF_FA': input.ref_fa,
-            'OUTPUT_FILE': output.bam
+            'OUTPUT_FILE': output.bam,
+            'PARAMS': _pbsv_align_pbmm2_params(wildcards)
         }
 
         # Report temp directory
@@ -74,6 +100,6 @@ rule pbsv_align_get_bam:
 
         # Align
         shell((
-            """pbmm2 align {INPUT_FILE} {REF_FA} {OUTPUT_FILE} --sort --sample '{SAMPLE}' --median-filter -j 4 -J 2; """
+            """pbmm2 align {INPUT_FILE} {REF_FA} {OUTPUT_FILE} --sort --sample '{SAMPLE}' {PARAMS} -j 4 -J 2; """
             """samtools index {OUTPUT_FILE}"""
         ).format(**param_dict))
