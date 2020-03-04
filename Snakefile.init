@@ -71,6 +71,7 @@ rule pbsv_init_sample_tables:
             raise RuntimeError('Found {} missing file(s) in FOFN for sample {}: {}{}'.format(
                 len(missing_files),
                 wildcards.sample,
+                ','.join(missing_files[0:3]),
                 ' ...' if len(missing_files) > 1 else ''
             ))
 

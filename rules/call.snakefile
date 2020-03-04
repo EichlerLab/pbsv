@@ -81,6 +81,26 @@ def _pbsv_get_all_svsig_files(wildcards):
     # Return
     return svsig_file_list
 
+def _pbsv_call_params(wildcards):
+    """
+    Get datatype-specific parameters for pbsv call.
+
+    :param wildcards: Rule wildcards.
+
+    :return: PBSV call parameters.
+    """
+
+    if wildcards.sample not in SAMPLE_TABLE.index:
+        raise RuntimeError('Missing sample table entry for: {sample}'.format(**wildcards))
+
+    sample_type = SAMPLE_TABLE.loc[wildcards.sample].squeeze()['TYPE'].lower()
+
+    if sample_type == 'ccs':
+        return '--ccs -O 2 -P 20'
+    elif sample_type == 'subreads':
+        return ''
+    else:
+        raise RuntimeError('Unrecognized sequence data type for sample {}: {}'.format(wildcards.sample, sample_type))
 
 #############
 ### Rules ###
@@ -107,17 +127,36 @@ rule pbsv_call_sample_final_bnd:
         """bcftools view -O z -o {output.calls}; """
         """tabix {output.calls}"""
 
-# pbsv_call_sample_final_vcf
+# pbsv_call_sample_final_sv
 #
 # Merge and sort SV calls.
 #
 # Note: sed and awk command is a workaround for version 1.2 and may not be needed for newer versions.
 # See: https://github.com/PacificBiosciences/pbbioconda/issues/60
-rule pbsv_call_sample_final_vcf:
+rule pbsv_call_sample_final_sv:
     input:
         vcf=expand('temp/call/unmerged_vcf/sample_{{sample}}/sv/variants_{chrom}.vcf', chrom=_pbsv_call_get_chrom_list())
     output:
         calls='pbsv_sample_{sample}_sv.vcf.gz'
+    shell:
+        """bcftools concat -O v {input.vcf} | """
+        """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' | """
+#        """sed '12i##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise SV breakpoint">' | """
+        """bcftools sort -O z -o {output.calls}; """
+        """sleep 10; """
+        """tabix {output.calls}"""
+
+# pbsv_call_sample_final_dup
+#
+# Merge and sort DUP calls.
+#
+# Note: sed and awk command is a workaround for version 1.2 and may not be needed for newer versions.
+# See: https://github.com/PacificBiosciences/pbbioconda/issues/60
+rule pbsv_call_sample_final_dup:
+    input:
+        vcf=expand('temp/call/unmerged_vcf/sample_{{sample}}/dup/variants_{chrom}.vcf', chrom=_pbsv_call_get_chrom_list())
+    output:
+        calls='pbsv_sample_{sample}_dup.vcf.gz'
     shell:
         """bcftools concat -O v {input.vcf} | """
         """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' | """
@@ -135,8 +174,10 @@ rule pbsv_call_sample_unmerged_bnd:
         svsig=_pbsv_get_all_svsig_files
     output:
         vcf=temp('temp/call/unmerged_vcf/sample_{sample}/bnd/variants_all.vcf')
+    params:
+        call_params=_pbsv_call_params
     shell:
-        """pbsv call --types BND -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
+        """pbsv call {params.call_params} --types BND -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
 
 # pbsv_call_sample_unmerged_sv
 #
@@ -148,10 +189,25 @@ rule pbsv_call_sample_unmerged_sv:
     output:
         vcf=temp('temp/call/unmerged_vcf/sample_{sample}/sv/variants_{chrom}.vcf')
     params:
-        min_svlen=config.get('min_svlen', '20')
+        min_svlen=config.get('min_svlen', '20'),
+        call_params=_pbsv_call_params
     shell:
-        """pbsv call --types INS,DEL,INV,DUP -m {params.min_svlen} -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
+        """pbsv call {params.call_params} --types INS,DEL,INV -m {params.min_svlen} -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
 
+# pbsv_call_sample_unmerged_dup
+#
+# Make initial DUP for one chromosome.
+rule pbsv_call_sample_unmerged_dup:
+    input:
+        ref_fa=config['reference'],
+        svsig=_pbsv_get_all_svsig_files
+    output:
+        vcf=temp('temp/call/unmerged_vcf/sample_{sample}/dup/variants_{chrom}.vcf')
+    params:
+        min_svlen=config.get('min_svlen', '20'),
+        call_params=_pbsv_call_params
+    shell:
+        """pbsv call {params.call_params} --types DUP -m {params.min_svlen} -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
 
 #
 # Joint callset
@@ -192,6 +248,24 @@ rule pbsv_call_joint_merge_sv:
         """bcftools sort -O z -o {output.calls}; """
         """tabix {output.calls}"""
 
+# pbsv_call_joint_merge_dup
+#
+# Merge and sort DUP calls.
+#
+# Note: sed and awk command is a workaround for version 1.2 and may not be needed for newer versions.
+# See: https://github.com/PacificBiosciences/pbbioconda/issues/60
+rule pbsv_call_joint_merge_dup:
+    input:
+        vcf=expand('temp/call/unmerged_vcf/joint_all/dup/variants_{chrom}.vcf', chrom=_pbsv_call_get_chrom_list())
+    output:
+        calls='pbsv_joint_all_dup.vcf.gz'
+    shell:
+        """bcftools concat -O v {input.vcf} | """
+        """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' | """
+#        """sed '12i##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise SV breakpoint">' | """
+        """bcftools sort -O z -o {output.calls}; """
+        """tabix {output.calls}"""
+
 # pbsv_call_joint_unmerged_bnd
 #
 # Make initial SV calls for one chromosome.
@@ -201,8 +275,10 @@ rule pbsv_call_joint_unmerged_bnd:
         svsig=_pbsv_get_all_svsig_files
     output:
         vcf=temp('temp/call/unmerged_vcf/joint_all/bnd/variants_all.vcf')
+    params:
+        call_params=_pbsv_call_params
     shell:
-        """pbsv call --types BND -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
+        """pbsv call {params.call_params} --types BND -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
 
 # pbsv_call_joint_unmerged_sv
 #
@@ -214,9 +290,25 @@ rule pbsv_call_joint_unmerged_sv:
     output:
         vcf=temp('temp/call/unmerged_vcf/joint_all/sv/variants_{chrom}.vcf')
     params:
-        min_svlen=config.get('min_svlen', '20')
+        min_svlen=config.get('min_svlen', '20'),
+        call_params=_pbsv_call_params
     shell:
-        """pbsv call --types INS,DEL,INV,DUP -m {params.min_svlen} -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
+        """pbsv call {params.call_params} --types INS,DEL,INV -m {params.min_svlen} -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
+
+# pbsv_call_joint_unmerged_bnd
+#
+# Make initial DUP calls for one chromosome.
+rule pbsv_call_joint_unmerged_dup:
+    input:
+        ref_fa=config['reference'],
+        svsig=_pbsv_get_all_svsig_files
+    output:
+        vcf=temp('temp/call/unmerged_vcf/joint_all/dup/variants_{chrom}.vcf')
+    params:
+        min_svlen=config.get('min_svlen', '20'),
+        call_params=_pbsv_call_params
+    shell:
+        """pbsv call {params.call_params} --types DUP -m {params.min_svlen} -j 4 {input.ref_fa} {input.svsig} {output.vcf}"""
 
 
 #

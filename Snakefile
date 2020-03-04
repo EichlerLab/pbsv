@@ -29,7 +29,8 @@ def _get_all_list(wildcards):
 rule pbsv_all:
     input:
         calls_sv=expand('pbsv_sample_{sample}_sv.vcf.gz', sample=SAMPLE_TABLE['SAMPLE']),
-        calls_bnd=expand('pbsv_sample_{sample}_bnd.vcf.gz', sample=SAMPLE_TABLE['SAMPLE'])
+        calls_bnd=expand('pbsv_sample_{sample}_bnd.vcf.gz', sample=SAMPLE_TABLE['SAMPLE']),
+        calls_dup=expand('pbsv_sample_{sample}_dup.vcf.gz', sample=SAMPLE_TABLE['SAMPLE'])
 
 
 include: 'rules/align.snakefile'

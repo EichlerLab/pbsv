@@ -16,8 +16,8 @@ Create a configuration file called `config.json`. Add the following text adjusti
 
 ```
 {
-  "reference": "/path/to/hg38.no_alt.fa",
-  "tandem_bed": "/net/eichler/vol27/projects/structural_variation/nobackups/pub/AudanoSulovari_Cell_2018/svpop/data/anno/trf/trf_regions_200_0.bed",
+  "reference": "/net/eichler/vol26/eee_shared/assemblies/hg38/no_alt/hg38.no_alt.fa",
+  "tandem_bed": "/net/eichler/vol27/projects/structural_variation/nobackups/resources/svpop/data/anno/trf/trf_regions_200_0.bed",
 }
 ```
 
@@ -34,6 +34,7 @@ Create a `samples.tab` file with two tab-delimited columns:
 
 * SAMPLE: Name of the sample
 * FOFN: A path to an FOFN file that points to all input BAM files
+* TYPE: "ccs" if the reads are CCS, and "subreads" if the reads are subreads.
 
 The column headings (SAMPLE and FOFN) must be the first line. The FOFN file is a list of absolute paths to each input
 BAM, one per line.
@@ -44,7 +45,7 @@ Define a variable that gives the full path to the pbsv pipeline code, which is t
 and this `README.md` file. The pipeline itself does not use the variable, but commands in this README will.
 
 Example:
-`PIPELINE_DIR=/net/eichler/vol27/projects/structural_variation/nobackups/pipelines/pbsv/201907`
+`PIPELINE_DIR=/net/eichler/vol27/projects/structural_variation/nobackups/pipelines/pbsv/201910`
 
 This section assumes the pbsv pipeline is not in the working directory, which is the recommended usage. That means the
 current directory is where `samples.tab` is and where all output files will go, but the pipeline code is in
@@ -62,9 +63,12 @@ Pipeline was last tested with these Eichler lab modules:
 module load htslib/1.9
 module load bcftools/1.9
 module load samtools/1.9
-module load pbconda/201904
+module load pbconda/201910
 module load miniconda/4.5.12
 ```
+
+If you are running on CentOS 7, replace `htslib/1.9` with `htslib/1.9-20`.
+
 
 ## Run
 

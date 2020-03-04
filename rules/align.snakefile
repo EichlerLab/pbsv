@@ -36,7 +36,7 @@ def _pbsv_align_pbmm2_params(wildcards):
     sample_type = SAMPLE_TABLE.loc[wildcards.sample].squeeze()['TYPE'].lower()
 
     if sample_type == 'ccs':
-        return '--preset CCS'
+        return '--preset CCS -L 0.1 -c 0'
     elif sample_type == 'subreads':
         return '--median-filter'
     else:
@@ -100,6 +100,6 @@ rule pbsv_align_get_bam:
 
         # Align
         shell((
-            """pbmm2 align {INPUT_FILE} {REF_FA} {OUTPUT_FILE} --sort --sample '{SAMPLE}' {PARAMS} -j 4 -J 2; """
+            """pbmm2 align {INPUT_FILE} {REF_FA} {OUTPUT_FILE} --sort --sample '{SAMPLE}' {PARAMS} -j 6 -J 2; """
             """samtools index {OUTPUT_FILE}"""
         ).format(**param_dict))

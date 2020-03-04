@@ -2,14 +2,16 @@
   "__default__": {
     "mem": "1G",
     "cpu": "1",
-    "rt": "00:30:00",
+    "rt": "4:00:00",
+    "disk": "0G",
     "params": ""
   },
 
   "pbsv_align_get_bam": {
     "mem": "4.5G",
-    "cpu": "4",
-    "rt": "36:00:00"
+    "cpu": "6",
+    "rt": "96:00:00",
+    "disk": "150G"
   },
   "pbsv_align_merge_bam": {
     "cpu": "8",
@@ -20,23 +22,33 @@
   "pbsv_call_sample_unmerged_sv": {
     "mem": "8G",
     "cpu": "4",
-    "rt": "16:00:00"
+    "rt": "24:00:00"
   },
   "pbsv_call_sample_unmerged_bnd": {
     "mem": "6G",
     "cpu": "4",
-    "rt": "12:00:00"
+    "rt": "24:00:00"
+  },
+  "pbsv_call_sample_unmerged_dup": {
+    "mem": "6G",
+    "cpu": "4",
+    "rt": "24:00:00"
   },
 
   "pbsv_call_joint_unmerged_sv": {
     "mem": "8G",
     "cpu": "4",
-    "rt": "16:00:00"
+    "rt": "24:00:00"
   },
   "pbsv_call_joint_unmerged_bnd": {
-    "mem": "2.5G",
+    "mem": "6G",
     "cpu": "4",
-    "rt": "12:00:00"
+    "rt": "24:00:00"
+  },
+  "pbsv_call_joint_unmerged_dup": {
+    "mem": "6G",
+    "cpu": "4",
+    "rt": "24:00:00"
   },
   "pbsv_call_joint_final_bnd": {
     "rt": "2:00:00",

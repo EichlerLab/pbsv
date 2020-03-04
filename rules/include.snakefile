@@ -74,8 +74,22 @@ PROCESS_ENV = os.environ.copy()
 # Read sample table
 #
 
+# Find samples table
+sample_tsv_exists = os.path.exists(os.path.join(WORKING_DIR, 'samples.tsv'))
+sample_tab_exists = os.path.exists(os.path.join(WORKING_DIR, 'samples.tab'))
+
+if not (sample_tsv_exists or sample_tab_exists):
+    raise RuntimeError('Missing sample table: samples.tsv or samples.tab')
+
+if sample_tsv_exists and sample_tab_exists:
+    raise RuntimeWarning('Duplicate samples tables: samples.tsv and samples.tab. Using only samples.tsv')
+
+if sample_tsv_exists:
+    SAMPLE_TABLE_FILE = os.path.join(WORKING_DIR, 'samples.tsv')
+else:
+    SAMPLE_TABLE_FILE = os.path.join(WORKING_DIR, 'samples.tab')
+
 # Definitions
-SAMPLE_TABLE_FILE = os.path.join(WORKING_DIR, 'samples.tab')
 SAMPLE_TABLE_COLUMNS = ['SAMPLE', 'FOFN', 'TYPE']
 
 # Check for file
