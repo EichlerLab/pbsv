@@ -11,7 +11,7 @@
     "mem": "4.5G",
     "cpu": "6",
     "rt": "96:00:00",
-    "disk": "150G"
+    "disk": "70G"
   },
   "pbsv_align_merge_bam": {
     "cpu": "8",
@@ -20,7 +20,7 @@
   },
 
   "pbsv_call_sample_unmerged_sv": {
-    "mem": "8G",
+    "mem": "12G",
     "cpu": "4",
     "rt": "24:00:00"
   },
