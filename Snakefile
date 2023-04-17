@@ -21,7 +21,7 @@ if 'ld_path' in config:
 #
 
 def _get_all_list(wildcards):
-    df = pd.read_csv('samples.tab')
+    df = pd.read_csv('samples.tsv')
 
 # pbsv_all
 #

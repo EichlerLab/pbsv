@@ -22,26 +22,26 @@ include: 'rules/include.snakefile'
 # Initialize all samples
 rule pbsv_init_all:
     input:
-        tab=expand('init/{sample}/cell_table.tab', sample=SAMPLE_TABLE['SAMPLE'])
+        tsv=expand('init/{sample}/cell_table.tsv.gz', sample=SAMPLE_TABLE['SAMPLE'])
     output:
-        tab='init/cell_table.tab'
+        tsv='init/cell_table.tsv.gz'
     run:
 
         df = pd.concat(
-            [pd.read_csv(val, sep='\t', header=0) for val in input.tab],
+            [pd.read_csv(val, sep='\t', header=0) for val in input.tsv],
             axis=0
         )
 
         df = df.loc[:, ('SAMPLE', 'MOVIE', 'DATA')]
 
-        df.to_csv(output.tab, sep='\t', index=False)
+        df.to_csv(output.tsv, sep='\t', index=False, compression='gzip')
 
 # pbsv_init_sample_tables
 #
 # Write a cell table and a flag file for each movie in the sample.
 rule pbsv_init_sample_tables:
     output:
-        tab='init/{sample}/cell_table.tab'
+        tsv='init/{sample}/cell_table.tsv.gz'
     run:
 
         # Get sample
@@ -88,4 +88,4 @@ rule pbsv_init_sample_tables:
         df = df.loc[:, ('SAMPLE', 'MOVIE', 'DATA')]
 
         # Write output table
-        df.to_csv(output.tab, sep='\t', index=False)
+        df.to_csv(output.tsv, sep='\t', index=False, compression='gzip')

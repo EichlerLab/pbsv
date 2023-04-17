@@ -96,7 +96,7 @@ def _pbsv_call_params(wildcards):
     sample_type = SAMPLE_TABLE.loc[wildcards.sample].squeeze()['TYPE'].lower()
 
     if sample_type == 'ccs':
-        return '--ccs -O 2 -P 20'
+        return '--ccs -A 2 -O 2 -P 20'
     elif sample_type == 'subreads':
         return ''
     else:
@@ -125,7 +125,7 @@ rule pbsv_call_sample_final_bnd:
     shell:
         """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' {input.vcf} | """
         """bcftools view -O z -o {output.calls}; """
-        """tabix {output.calls}"""
+        """tabix {output.calls} && touch -r {output.calls} {output.calls}.tbi"""
 
 # pbsv_call_sample_final_sv
 #
@@ -143,8 +143,7 @@ rule pbsv_call_sample_final_sv:
         """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' | """
 #        """sed '12i##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise SV breakpoint">' | """
         """bcftools sort -O z -o {output.calls}; """
-        """sleep 10; """
-        """tabix {output.calls}"""
+        """tabix {output.calls} && touch -r {output.calls} {output.calls}.tbi"""
 
 # pbsv_call_sample_final_dup
 #
@@ -162,15 +161,14 @@ rule pbsv_call_sample_final_dup:
         """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' | """
 #        """sed '12i##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise SV breakpoint">' | """
         """bcftools sort -O z -o {output.calls}; """
-        """sleep 10; """
-        """tabix {output.calls}"""
+        """tabix {output.calls} && touch -r {output.calls} {output.calls}.tbi"""
 
 # pbsv_call_sample_unmerged_bnd
 #
 # Make initial SV calls for one chromosome.
 rule pbsv_call_sample_unmerged_bnd:
     input:
-        ref_fa=config['reference'],
+        ref_fa='data/ref.fa',
         svsig=_pbsv_get_all_svsig_files
     output:
         vcf=temp('temp/call/unmerged_vcf/sample_{sample}/bnd/variants_all.vcf')
@@ -184,7 +182,7 @@ rule pbsv_call_sample_unmerged_bnd:
 # Make initial SV calls (INS, DEL, and INV) for one chromosome.
 rule pbsv_call_sample_unmerged_sv:
     input:
-        ref_fa=config['reference'],
+        ref_fa='data/ref.fa',
         svsig=_pbsv_get_all_svsig_files
     output:
         vcf=temp('temp/call/unmerged_vcf/sample_{sample}/sv/variants_{chrom}.vcf')
@@ -199,7 +197,7 @@ rule pbsv_call_sample_unmerged_sv:
 # Make initial DUP for one chromosome.
 rule pbsv_call_sample_unmerged_dup:
     input:
-        ref_fa=config['reference'],
+        ref_fa='data/ref.fa',
         svsig=_pbsv_get_all_svsig_files
     output:
         vcf=temp('temp/call/unmerged_vcf/sample_{sample}/dup/variants_{chrom}.vcf')
@@ -228,7 +226,7 @@ rule pbsv_call_joint_final_bnd:
         """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' {input.vcf} | """
         """bcftools view -O z -o {output.calls}; """
         """sleep 10; """
-        """tabix {output.calls}"""
+        """tabix {output.calls} && touch -r {output.calls} {output.calls}.tbi"""
 
 # pbsv_call_joint_merge_sv
 #
@@ -246,7 +244,7 @@ rule pbsv_call_joint_merge_sv:
         """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' | """
 #        """sed '12i##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise SV breakpoint">' | """
         """bcftools sort -O z -o {output.calls}; """
-        """tabix {output.calls}"""
+        """tabix {output.calls} && touch -r {output.calls} {output.calls}.tbi"""
 
 # pbsv_call_joint_merge_dup
 #
@@ -264,7 +262,7 @@ rule pbsv_call_joint_merge_dup:
         """awk -vOFS="\\t" '($1 !~ /^#/) {{gsub(",", ";", $7)}} {{print}}' | """
 #        """sed '12i##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise SV breakpoint">' | """
         """bcftools sort -O z -o {output.calls}; """
-        """tabix {output.calls}"""
+        """tabix {output.calls} && touch -r {output.calls} {output.calls}.tbi"""
 
 # pbsv_call_joint_unmerged_bnd
 #

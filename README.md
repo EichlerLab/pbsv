@@ -30,7 +30,7 @@ can be adjusted as low as "10" (< 10 causes PBSV to fail and return an error mes
 
 ### Define input samples
 
-Create a `samples.tab` file with two tab-delimited columns:
+Create a `samples.tsv` file with two tab-delimited columns:
 
 * SAMPLE: Name of the sample
 * FOFN: A path to an FOFN file that points to all input BAM files
@@ -63,7 +63,7 @@ Pipeline was last tested with these Eichler lab modules:
 module load htslib/1.9
 module load bcftools/1.9
 module load samtools/1.9
-module load pbconda/201910
+module load pbconda/202004
 module load miniconda/4.5.12
 ```
 
